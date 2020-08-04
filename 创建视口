@@ -1,0 +1,34 @@
+#define GLUT_DISABLE_ATEXIT_HACK//神秘代码
+#include<Windows.h>
+#include<gl\glut.h>
+
+
+void draw()
+{
+	glClearColor(0.0, 0.0, 0.0, 0.0);//设置清除颜色为黑色（底色）
+	glClear(GL_COLOR_BUFFER_BIT);//不可缺，清除缓冲区
+
+	glRectf(-0.5,-0.5,0.5,0.5); //用已有函数制作一个矩形
+	glFlush();//执行，发送命令并返回
+}
+
+void redraw(int x,int y)//视口内图形不可变形
+{
+	int dis = x>y?y:x//x>y? 1=x,0=y
+	glViewport(0,0,dis,dis);//(左下角位置)+(宽高)
+}
+
+void main()
+{
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);//设置图形显示模式,单缓存，颜色
+	glutInitWindowPosition(0,0);//设置初始化窗口位置（x,y）
+	glutInitWindowSize(500,500);//设置初始窗口大小
+	glutCreateWindow("test");//创建一个顶层窗口
+	
+	glutDisplayFunc(draw);//注册当前窗口的显示回调函数
+	glutReshapeFunc(redraw);//创建一个视口
+	glutMainLoop();//事件循环，程序结束即返回
+
+
+}
+//回调函数：必须存在，只要opengl确定显示内容要被刷新，显示回调函数就会被调用
