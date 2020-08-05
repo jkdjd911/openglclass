@@ -1,0 +1,60 @@
+#define GLUT_DISABLE_ATEXIT_HACK		//神秘代码
+#include<Windows.h>
+#include<gl\glut.h>
+
+void draw()
+{
+	glClearColor(0.4, 0.5, 0.9, 0.0);	//设置清除颜色为黑色（底色）
+	glClear(GL_COLOR_BUFFER_BIT);		//不可缺，清除缓冲区
+
+	//线的绘制   启用反走样,宽度设置
+	glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
+	glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
+	glLineWidth(20);
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(-0.6,0.3,0.0);
+	glVertex3f(-0.6,0.6,0.0);
+	glVertex3f(-0.8,0.6,0.0);
+	glEnd();
+	
+	//三角形（当前选择颜色填充）
+	glBegin(GL_TRIANGLES);
+	glVertex2f(-0.5,0.1);
+	glVertex2f(-0.7,-0.5);
+	glVertex2f(-0.5,-0.5);
+	glEnd();
+
+	//多边形   边缘设置修改，上色处理，显示轮廓
+	glShadeModel(GL_SMOOTH);//顶点光滑上色，见下
+	glBegin(GL_POLYGON);//边缘标记，见下
+			glColor3f(0.1,0.3,0.6);					glVertex3f(0.0,0.0,0.0);
+			glColor3f(0.2,0.6,0.6);					glVertex3f(0.7,0.5,0.0);
+			glColor3f(0.9,0.3,0.7);					glVertex3f(0.5,0.5,0.0);
+													glVertex3f(-0.2,0.9,0.0);
+													glVertex3f(-0.3,-0.5,0.0);
+	glEnd();
+
+
+	glFlush();//执行，发送命令并返回
+}
+
+void redraw(int x,int y)		//视口内图形不可变形
+{
+	int dis = x>y?y:x;			//x>y? 1=x,0=y
+	glViewport(0,0,dis,dis);	//(左下角位置)+(宽高)
+}
+
+void main()
+{
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);		//设置图形显示模式,单缓存，颜色
+	glutInitWindowPosition(0,0);					//设置初始化窗口位置（x,y）
+	glutInitWindowSize(500,500);					//设置初始窗口大小
+	glutCreateWindow("test");						//创建一个顶层窗口
+	
+	glutDisplayFunc(draw);							//注册当前窗口的显示回调函数
+	glutReshapeFunc(redraw);						//创建一个视口
+	glutMainLoop();									//事件循环，程序结束即返回
+
+
+}
