@@ -1,0 +1,92 @@
+#define GLUT_DISABLE_ATEXIT_HACK		//神秘代码
+#include<Windows.h>
+#include<gl\glut.h>
+
+void draw()
+{
+	glClearColor(0.4, 0.5, 0.9, 0.0);	//设置清除颜色为（底色）
+	glClear(GL_COLOR_BUFFER_BIT);		//不可缺，清除缓冲区
+
+
+	glTranslatef(100,100,0);//平移
+	glScalef(0.5,0.5,0);//缩放
+	glRotatef(30,0.0,0.0,1.0);//旋转
+	
+	glutWireTeapot(200);//线框茶壶
+
+	glTranslatef(300,350,0);//平移
+	glutWireSphere(100,20,20);//线框球体
+	
+
+
+	glFlush();//执行，发送命令并返回
+}
+
+
+
+
+void redraw(int x,int y)		//视口内图形不可变形
+{
+	int dis = x>y?y:x;			//x>y? 1=x,0=y
+	glViewport(0,0,dis,dis);	//(左下角位置)+(宽高)
+}
+
+
+
+
+void main()
+{
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);		//设置图形显示模式,单缓存，颜色
+	glutInitWindowPosition(0,0);					//设置初始化窗口位置（x,y）
+	glutInitWindowSize(500,500);					//设置初始窗口大小
+	glutCreateWindow("test");						//创建一个顶层窗口
+
+	glMatrixMode(GL_PROJECTION);					//指定当前投影矩阵堆栈
+	glLoadIdentity();								//初始化一个单位矩阵
+	gluOrtho2D(0.0,500.0,0.0,500.0);				//指定屏幕区域对应模型范围
+	
+	glutDisplayFunc(draw);							//注册当前窗口的显示回调函数
+	glutReshapeFunc(redraw);						//创建一个视口
+	glutMainLoop();									//事件循环，程序结束即返回
+
+
+}
+
+/***	颜色缓存
+		深度缓存
+		模板缓存
+		累计缓存
+
+
+  变换种类
+  1.视口变换：改变观察位置
+  2.模型变换：改变模型位置
+  3.模型视图变换：见上合并
+  4.投影变换：修改视见空间
+  5.视见区变换：修改窗口输出
+
+	glTranslatef(100,100,0);//平移沿（x，y，z）
+	glScalef(0.5,0.5,0);//缩放按比例
+	glRotate(60,0.0,0.0,1.0);//旋转（angle，x，y，z）指定旋转方向矢量的坐标
+
+  平行投影
+  透视投影：近大远小
+
+  实现二维观察
+  1.指定矩阵堆栈
+					glMatrixMode(GL_PROJECTION);
+						glLoadIdentity();
+  2.指定裁剪窗口
+						gluOrtho2D(0.0,500.0,0.0,500.0);		//双精度浮点数对应左右下上四条边界
+  3.指定视区
+						glViewPort(0,0,宽,高)         //左下坐标，宽高
+
+  栅格化：只能用多个凸多边形构造凹多边形
+  Bezier:可制作曲线曲面
+
+  void glutSolidSphere(r,经线，纬线)//实体球面 /   glutWireSphere(r,经线，纬线); //线框球面
+  void glutSolidCone(r,h，slice，stacks)//实体圆锥面 /   glutWireCone(r,h，slice，stacks); //线框圆锥面
+  void glutSolidTeapot(size)//实体茶壶 /   glutWireTeapot(茶壶); //线框茶壶
+
+
+  ***/
