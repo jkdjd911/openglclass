@@ -1,0 +1,120 @@
+#define GLUT_DISABLE_ATEXIT_HACK		//神秘代码
+#include<Windows.h>
+#include<gl\glut.h>
+
+void draw()
+{		
+	GLfloat am[]={0.4,0.5,0.2,1.0};		//定义数组
+	GLfloat di[]={0.2,0.4,0.6,1.0};
+	GLfloat sp[]={0.6,0.1,0.3,1.0};
+	GLfloat po[]={0.6,0.3,0.6,0.0};		//光照方向
+	
+	glLightfv(GL_LIGHT0,GL_AMBIENT,am);		//创建光源0，环境光，am
+	glLightfv(GL_LIGHT0,GL_DIFFUSE,di);		//漫反射光
+	glLightfv(GL_LIGHT0,GL_SPECULAR,sp);	//镜面光
+	glLightfv(GL_LIGHT0,GL_POSITION,po);
+	
+	glEnable(GL_LIGHTING);  //启用光源
+	glEnable(GL_LIGHT0);
+	
+	glDepthFunc(GL_LESS);//深度缓存，可显示镜面光
+	glEnable(GL_DEPTH_TEST);
+
+	GLfloat mat_ambient[]={0.8,0.8,0.8,1.0};
+	GLfloat mat_di[]={0.8,0.2,0.2,1.0};
+	GLfloat mat_sp[]={0.5,0.8,0.4,1.0};
+	GLfloat mat_shininess[]={ 50.0 };  //镜面光
+	glMaterialfv(GL_FRONT,GL_AMBIENT,mat_ambient);	//材质
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_di);
+	glMaterialfv(GL_FRONT,GL_SPECULAR,mat_sp);
+	glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
+
+	glClearColor(0.4, 0.5, 0.9, 0.0);	//设置清除颜色为（底色）
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);		//不可缺，清除缓冲区，深度缓存
+
+
+	glTranslatef(200,150,0);//平移
+	glScalef(0.5,0.5,0);//缩放
+	glRotatef(30,0.0,0.0,1.0);//旋转
+	
+	glutSolidTeapot(200);//线框茶壶
+
+	glTranslatef(300,350,0);//平移
+	glutSolidSphere(100,20,20);//线框球体
+	
+
+
+	glFlush();//执行，发送命令并返回
+}
+
+
+
+
+void redraw(int x,int y)		//视口内图形不可变形
+{
+	int dis = x>y?y:x;			//x>y? 1=x,0=y
+	glViewport(0,0,dis,dis);	//(左下角位置)+(宽高)
+}
+
+
+
+
+void main()
+{
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB|GLUT_DEPTH);		//设置图形显示模式,单缓存，颜色,深度缓存
+	glutInitWindowPosition(0,0);					//设置初始化窗口位置（x,y）
+	glutInitWindowSize(500,500);					//设置初始窗口大小
+	glutCreateWindow("test");						//创建一个顶层窗口
+
+	glMatrixMode(GL_PROJECTION);					//指定当前投影矩阵堆栈
+	glLoadIdentity();								//初始化一个单位矩阵
+	gluOrtho2D(0.0,500.0,0.0,500.0);				//指定屏幕区域对应模型范围
+	
+	glutDisplayFunc(draw);							//注册当前窗口的显示回调函数
+	glutReshapeFunc(redraw);						//创建一个视口
+	glutMainLoop();									//事件循环，程序结束即返回
+
+
+}
+
+/***	
+光照
+1.环境光：多次反射没有方向
+2.散射光：向外散射的光
+3.镜面光：高光区域
+4.辐射光：从物体发出，不受光源影响
+	
+	  添加光照步骤：
+		1.创建光源
+	                    void glLight{}( 参数 , 参数 ,  参数);
+		2.选择光照模型 	  
+			光源分3类   平行光： LightPosition=(1,0,0,1)     点光源：LightPosition=(1,0,0,0)    聚光灯
+				聚光灯：1.定义聚光灯位置
+						2.定义聚光灯截止角   GL_SPOT_CUTOFF 光线与中心线夹角
+						3.定义聚光方向  齐次坐标定义  GL_SPOT_DIRECTION
+						4.定义聚光指数   GL_SPOT_EXPONENT   控制光的集中程度
+   
+		 3.启用光照
+				需明确启用光照
+				glEnable(GL_LIGHTING);  //启用光照调用函数
+				glEnable(light);		//指定光源
+			全局光照设置
+				glLightMode{}( ,  );   //
+		4.设置材质
+			环境  漫反射  镜面反射
+			glMaterial{}(  ,  ,  );		//指定材质属性
+			颜色材质属性
+			glEnable(GL_COLOR_MATERIAL);
+			glColorMaterial(   ,   );
+
+  透明处理
+	1.启用透明测试
+	2.绘制所有不透明物体
+	3.关闭或只读深度测试，启用混合操作
+	4.绘制透明物体
+	5.恢复深度测试
+		GL_Enable(GL_BLEND);//开启混合操作
+
+  纹理映射* 较麻烦
+
+  ***/
