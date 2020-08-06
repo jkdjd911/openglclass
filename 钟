@@ -1,0 +1,211 @@
+#define GLUT_DISABLE_ATEXIT_HACK
+#include <windows.h>
+#include <GL/glut.h>
+#include <math.h>	//计算函数
+#include<time.h>	//引用时间库
+
+
+const double Pi = acos(-1.0);	//反余弦为pi
+const GLfloat R=0.8f;			//单精度浮点数R
+const int n=12;					//控制表盘形状  2Pi/n  将表盘切割为n份
+static GLfloat angle=2*Pi;
+
+
+//秒
+float Mysecond(struct tm *ptr)
+{
+	return ((Pi/2)-(((float)ptr->tm_sec)/60)*2*Pi);    
+};
+
+
+//分
+float Mymin(struct tm *ptr)
+{
+	return ((Pi/2)-((ptr->tm_min+ptr->tm_sec/60.0)/60)*2*Pi);
+};
+
+
+//时
+float Myhour(struct tm *ptr)
+{
+	if(0<ptr->tm_hour&&ptr->tm_hour<12)
+	{
+		 return ((Pi/2)-((float)ptr->tm_hour+ptr->tm_min/60.0)/12*2*Pi);
+	}
+	else
+	{
+		return ((Pi/2)-((ptr->tm_hour-12.0+ptr->tm_min/60.0)/12)*2*Pi);
+	}
+
+};
+
+
+void draw()
+{
+	
+	//获取系统时间
+	struct tm *ptr;
+	time_t it;			//time_t为time.h定义的结构体,这个函数会获取当前时间it，并返回
+	it=time(NULL);		//获取系统时间，单位为秒
+	ptr=localtime(&it);	//转为时间结构,适合输出
+	
+	
+	
+	glClearColor(0.0, 0.0, 0.0, 0.0);			//设置清除颜色为黑色（底色）
+	glClear(GL_COLOR_BUFFER_BIT);				//不可缺，清除缓冲区
+	
+	glEnable(GL_POINT_SMOOTH);
+	glEnable(GL_LINE_SMOOTH);
+	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);	//点反走样，最高质量
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);		//线反走样，最高质量
+	glEnable(GL_BLEND);							//启用混合功能
+	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	//颜色混合设置不透明度（源颜色作为因子，表示用1.0减去源颜色的alpha值来作为因子。）
+
+
+	//表盘
+	glColor3f(0.5,0.5,0.5);//灰色
+
+	glBegin(GL_POLYGON);
+		  for(int i=0;i<n;i++)
+			{
+				glVertex2f(R*cos(2*Pi/n*i), R*sin(2*Pi/n*i));
+			}
+	glEnd();
+
+
+
+	//刻度
+	 glColor3f(1.0,1.0,1.0);//白色
+	 glPointSize(5.0f);
+	 
+	 glBegin(GL_POINTS);
+		for(int j=0;j<12;j++)
+			{
+				glVertex2f(0.75*cos(2*Pi/12*j),0.75*sin(2*Pi/12*j));
+			}	
+	 glEnd();
+
+
+	 //时针
+	 glColor3f(0.0,0.0,0.0);//黑色
+	 glLineWidth(5.0f);
+	 
+	 glBegin(GL_LINES);
+	 glRotatef((angle/3600.0),0.0,0.0,1.0);	//旋转一圈需要60*60*12次，设置每次刷新旋转角度angle/3600
+	 glVertex2f(0.0,0.0);
+	 glVertex2f(cos(Myhour(ptr))*R*0.50,sin(Myhour(ptr))*R*0.50);
+	 glEnd();
+
+
+	 //分针
+	 glLineWidth(4.0f);
+	 glColor3f(0.0,0.0,0.0);
+
+	 glBegin(GL_LINES);
+	 glRotatef((angle/60.0),0.0,0.0,1.0);	//旋转一圈需要60*60次，设置每次刷新旋转角度angle/60
+	 glVertex2f(0.0,0.0);
+	 glVertex2f(cos(Mymin(ptr))*R*0.65,sin(Mymin(ptr))*R*0.65);
+	 glEnd();
+
+
+	 //秒针
+	 glLineWidth(3.0f);
+	 glColor3f(0.0,0.0,0.0);
+
+	 glBegin(GL_LINES);
+	 glRotatef(angle,0.0,0.0,1.0);	//旋转一圈需要60次，设置每次刷新旋转角度angle
+	 glVertex2f(0.0,0.0);
+	 glVertex2f(cos(Mysecond(ptr))*R*0.85,sin(Mysecond(ptr))*R*0.85);
+	 glEnd();	
+
+	 
+	 glFlush();//执行，发送命令并返回
+}
+
+
+void redraw(void)		//一旦被启用，一直调用自身
+{
+	angle-=((2*Pi)/60);
+	Sleep(1000);		//占用CPU，线程休眠1000毫秒
+	if(angle<0.0f)
+		{
+			angle=2*Pi;
+		}
+	draw();//调用钟表函数
+}
+
+
+//主函数
+int main(int argc, char *argv[])
+{
+	glutInit(&argc, argv);//glutInit，对GLUT进行初始化，这个函数必须在其它的GLUT使用之前调用一次。其格式比较死板，一般照抄这句glutInit(&argc, argv)就可以了。
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);//设置图形显示模式,单缓存，颜色
+	glutInitWindowPosition(100,100);//设置初始化窗口位置（x,y）
+	glutInitWindowSize(500,500);//设置初始窗口大小
+	glutCreateWindow("钟");//创建一个顶层窗口
+	
+	glutDisplayFunc(&draw);	//注册当前窗口的显示回调函数，调用函数
+	glutIdleFunc(&redraw);	//动画函数
+	
+	glutMainLoop();//事件循环，程序结束即返回
+
+	return 0;
+}
+
+/***
+使用反余弦函数制作时钟
+
+  
+在网络翻阅资料发现Pi = acos(-1.0);
+
+angle取2*Pi，每次刷新动画为60/2Pi度，angle从2Pi到0循环
+
+
+单精度浮点数  size
+
+
+秒分时的返回
+sin（π/2－αbai）=cosα
+cos（π/2－α）=sinα
+
+
+系统时间获取
+百度获得
+time_t timep;
+struct tm *p;
+time (&timep);
+p=gmtime(&timep);
+p->tm_sec		获取当前秒
+p->tm_min		获取当前分
+p->tm_hour		获取当前小时
+glBlendFunc函数
+
+
+表盘刻度绘制
+		
+		百度画圆：
+		for(int i=0;i<n;i++)
+			{
+				(R*cos(2*Pi/n*i), R*sin(2*Pi/n*i))
+			}
+			  设角度为A=2*Pi/n*i，当n越大，则该形状切割次数越多，i较小时A=>0，当i较大时i=n时A=>2*Pi
+			  函数为R从0-2*Pi角度即圆的绘制
+	
+	  ·刻度：同上，将半径截短，切割次数取12份，加大点大小
+
+
+
+时分秒针的画法
+刷新间隔为1s
+		时针：旋转一圈需要60*60*12次，设置每次刷新旋转角度angle/3600
+		分针：旋转一圈需要60*60次，设置每次刷新旋转角度angle/60
+		秒针：旋转一圈需要60次，设置每次刷新旋转角度angle
+
+redraw函数设置：启动动画
+
+部分指针调用
+
+sleep(1000):函数滞留1s
+
+***/
